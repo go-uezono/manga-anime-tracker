@@ -13,32 +13,26 @@ class Anime(models.Model):
 
 # UserAnime model
 class UserAnime(models.Model):
-    
-    STATUS_OPTIONS = [
-        ("planned", "Plan to watch"), 
-        ("watching", "Watching"),
-        ("completed", "Completed")
-    ]
+    class Status(models.TextChoices):
+        PLANNED = "planned", "Plan to watch"
+        WATCHING = "watching", "Watching"
+        COMPLETED = "completed", "Completed"
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE
-    )
-
-    anime = models.ForeignKey(
-        Anime,
-        on_delete=models.CASCADE
-    )
-
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="anime_list")
+    anime = models.ForeignKey(Anime, on_delete=models.CASCADE, related_name="user_entries")
     status = models.CharField(
         max_length=20,
-        choices=STATUS_OPTIONS,
-        default="planned"
+        choices=Status.choices,
+        default=Status.PLANNED,
     )
 
     progress = models.PositiveIntegerField(default=0)
-
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("user", "anime")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "anime"],
+                name="unique_user_anime",
+            )
+        ]

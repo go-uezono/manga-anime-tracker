@@ -1,17 +1,52 @@
-import requests
-from django.shortcuts import render
 from django.contrib.auth.models import User
+from django.db import IntegrityError
+import requests
 from rest_framework import generics, status
-from rest_framework.views import APIView
+from rest_framework.exceptions import APIException
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import AddAnimeSerializer, UserSerializer
-from .models import Anime, UserAnime
+from rest_framework.views import APIView
+
+from .models import UserAnime
+from .serializers import (
+    AddAnimeSerializer,
+    UpdatedUserAnimeSerializer,
+    UserAnimeSerializer,
+    UserSerializer,
+)
+from .services import JIKAN_URL, fetch_from_jikan, get_or_create_anime
 
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+class SearchAnimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get("q", "").strip()
+        if not query:
+            return Response(
+                {"error": "Query param 'q' is required."}, 
+                status=400
+            )
+
+        response = fetch_from_jikan(JIKAN_URL, params={"q": query, "limit": 10})
+        response.raise_for_status()
+
+        results = [
+            {
+                "mal_id": item["mal_id"],
+                "title": item["title"],
+                "image_url": item["images"]["jpg"]["image_url"],
+                "episodes": item.get("episodes") or 0,
+            }
+            for item in response.json().get("data", [])
+        ]
+
+        return Response(results)
+
 
 class AddAnimeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -19,49 +54,43 @@ class AddAnimeView(APIView):
     def post(self, request):
         serializer = AddAnimeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        mal_id = serializer.validated_data["mal_id"]
-        watch_status = serializer.validated_data["status"]
+        validated = serializer.validated_data
+        anime = get_or_create_anime(validated["mal_id"])
 
-        anime = Anime.objects.filter(mal_id=mal_id).first()
-
-        # Fetch from Jikan API if anime doesn't exist
-        if anime is None:
-            response = requests.get(
-                f"fhttps://api.jikan.moe/v4/anime/{mal_id}"
+        try:
+            user_anime = UserAnime.objects.create(
+                user=request.user, anime=anime, status=validated["status"]
             )
-
-            if response.status_code != 200:
-                return Response(
-                    {"error": "Anime not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            anime_data = response.json()["data"]
-            anime = Anime.objects.create(
-                mal_id = anime_data["mal_id"],
-                title = anime_data["title"],
-                image_url = anime_data["images"]["jpg"]["image_url"],
-                episodes = anime_data["episodes"] or 0,
-            )
-
-            # Prevent duplicate entries
-            if UserAnime.objects.filter(
-                user = request.user,
-                anime = anime
-            ).exists():
-                return Response(
-                    {"error": "Anime already in your list"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            
-            user_anime = UserAnime.object.create(
-                user=request.user,
-                anime=anime,
-                status=watch_status,
+        except IntegrityError:
+            return Response(
+                {"error": "Anime already in your list."},
+                status=status.HTTP_409_CONFLICT,
             )
 
         return Response(
-            {"message": "Anime added successfully"},
+            {
+                "message": "Anime added successfully",
+                "anime": UserAnimeSerializer(user_anime).data,
+            },
             status=status.HTTP_201_CREATED,
         )
+
+class ListUserAnimeView(generics.ListAPIView):
+    serializer_class = UserAnimeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserAnime.objects.filter(
+            user=self.request.user
+        ).select_related("anime")
+
+# Updates and deletes anime
+class UserAnimeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UpdatedUserAnimeSerializer
+
+    def get_queryset(self):
+        return UserAnime.objects.filter(
+            user=self.request.user
+        )
+        

@@ -36,10 +36,20 @@ class UserAnimeSerializer(serializers.ModelSerializer):
 
 class AddAnimeSerializer(serializers.Serializer):
     mal_id = serializers.IntegerField()
-    status = serializers.ChoiceField(
-        choices = [
-            "planned",
-            "watching",
-            "completed"
-        ]
-    )
+    status = serializers.ChoiceField(choices=UserAnime.Status.choices)
+
+class UpdatedUserAnimeSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        anime = self.instance.anime if self.instance else None
+        progress = data.get("progress")
+
+        if anime and progress is not None and anime.episodes and progress > anime.episodes:
+            raise serializers.ValidationError(
+                {"progress": "Progress can't exceed total episode count."}
+            )
+        return data
+
+    class Meta:
+        model = UserAnime
+        fields = ["status", "progress"]
+

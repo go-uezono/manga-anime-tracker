@@ -1,4 +1,37 @@
+# --- Python / Django ---
 .venv
 .env
 __pycache__/
 *.py[cod]
+*.egg-info/
+db.sqlite3
+db.sqlite3-journal
+*.log
+media/
+staticfiles/
+.pytest_cache/
+.mypy_cache/
+
+# --- Django secrets/config variants ---
+.env.local
+.env.*.local
+local_settings.py
+
+# --- React / Node (frontend) ---
+node_modules/
+dist/
+build/
+.vite/
+frontend/.env
+frontend/.env.local
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Misc ---
+*.sqlite3
+coverage/
+.coverage
