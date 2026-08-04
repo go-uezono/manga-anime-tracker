@@ -13,13 +13,20 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class AnimeSerializer(serializers.ModelSerializer):
+    franchise = serializers.CharField(
+        source="franchise.name",
+        read_only=True,
+        default=None,
+    )
+
     class Meta:
         model = Anime
         fields = [
-            "mal_id",
+            "anilist_id",
             "title",
             "image_url",
-            "episodes"
+            "episodes",
+            "franchise",
         ]
 
 class UserAnimeSerializer(serializers.ModelSerializer):
@@ -35,7 +42,7 @@ class UserAnimeSerializer(serializers.ModelSerializer):
         ]
 
 class AddAnimeSerializer(serializers.Serializer):
-    mal_id = serializers.IntegerField()
+    anilist_id = serializers.IntegerField()
     status = serializers.ChoiceField(choices=UserAnime.Status.choices)
 
 class UpdatedUserAnimeSerializer(serializers.ModelSerializer):

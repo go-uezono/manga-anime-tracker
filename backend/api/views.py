@@ -1,8 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-import requests
 from rest_framework import generics, status
-from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +12,7 @@ from .serializers import (
     UserAnimeSerializer,
     UserSerializer,
 )
-from .services import JIKAN_URL, fetch_from_jikan, get_or_create_anime
+from .services import SEARCH_QUERY, fetch_from_anilist, get_or_create_anime, strip_name
 
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -32,21 +30,21 @@ class SearchAnimeView(APIView):
                 status=400
             )
 
-        response = fetch_from_jikan(JIKAN_URL, params={"q": query, "limit": 10})
+        response = fetch_from_anilist(SEARCH_QUERY, {"search": query})
         response.raise_for_status()
+        payload = response.json()
 
         results = [
             {
-                "mal_id": item["mal_id"],
+                "anilist_id": item["id"],
                 "title": item["title"],
-                "image_url": item["images"]["jpg"]["image_url"],
+                "image_url": item["coverImage"]["large"],
                 "episodes": item.get("episodes") or 0,
             }
-            for item in response.json().get("data", [])
+            for item in payload["data"]["Page"]["media"]
         ]
 
         return Response(results)
-
 
 class AddAnimeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -55,7 +53,7 @@ class AddAnimeView(APIView):
         serializer = AddAnimeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated = serializer.validated_data
-        anime = get_or_create_anime(validated["mal_id"])
+        anime = get_or_create_anime(validated["anilist_id"])
 
         try:
             user_anime = UserAnime.objects.create(
@@ -75,14 +73,29 @@ class AddAnimeView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-class ListUserAnimeView(generics.ListAPIView):
-    serializer_class = UserAnimeSerializer
+class ListUserAnimeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return UserAnime.objects.filter(
-            user=self.request.user
-        ).select_related("anime")
+    def get(self, request):
+        entries = UserAnime.objects.filter(
+            user=request.user
+        ).select_related("anime", "anime__franchise")
+
+        grouped = {}
+
+        for entry in entries:
+            key = entry.anime.franchise.name if entry.anime.franchise else entry.anime.title
+            grouped.setdefault(key, []).append(entry)
+        
+        response = {}
+        for key, group_entries in grouped.items():
+            sorted_entries = sorted(
+                group_entries,
+                key=lambda e: strip_name(e.anime.title)
+            )
+            response[key] = [UserAnimeSerializer(e).data for e in sorted_entries]
+
+        return Response(response)
 
 # Updates and deletes anime
 class UserAnimeDetailView(generics.RetrieveUpdateDestroyAPIView):

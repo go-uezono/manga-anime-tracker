@@ -1,15 +1,27 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+# Franchise model; groups related anime into one franchise
+class Franchise(models.Model):
+    name = models.CharField(max_length=255)
+    normalized_name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name      
+
 # Anime model
 class Anime(models.Model):
-    mal_id = models.IntegerField(unique=True)
+    anilist_id = models.IntegerField(unique=True)
     title = models.CharField(max_length=255)
     image_url = models.URLField()
     episodes = models.PositiveIntegerField()
-
-    def __str__(self):
-        return self.title
+    franchise = models.ForeignKey(
+        Franchise,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="anime",
+    )
 
 # UserAnime model
 class UserAnime(models.Model):
