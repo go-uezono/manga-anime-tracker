@@ -37,7 +37,7 @@ class SearchAnimeView(APIView):
         results = [
             {
                 "anilist_id": item["id"],
-                "title": item["title"],
+                "title": item["title"]["romaji"],
                 "image_url": item["coverImage"]["large"],
                 "episodes": item.get("episodes") or 0,
             }
@@ -52,12 +52,17 @@ class AddAnimeView(APIView):
     def post(self, request):
         serializer = AddAnimeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        
         validated = serializer.validated_data
         anime = get_or_create_anime(validated["anilist_id"])
+        progress = anime.episodes if validated["status"] == "completed" else 0
 
         try:
             user_anime = UserAnime.objects.create(
-                user=request.user, anime=anime, status=validated["status"]
+                user=request.user, 
+                anime=anime, 
+                status=validated["status"],
+                progress=progress,
             )
         except IntegrityError:
             return Response(

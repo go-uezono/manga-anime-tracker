@@ -88,7 +88,7 @@ SEASON_PATTERNS = [
     r"\bpart\s*\d+\b",
     r"\bfinal season\b",
     r"\b(i{1,3}|iv|v|vi{1,3})\b",
-    r":\s*,*$",
+    r":\s*.*$",
     r"\s+\d+$",
 ]
 

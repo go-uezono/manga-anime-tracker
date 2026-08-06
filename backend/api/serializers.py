@@ -47,10 +47,18 @@ class AddAnimeSerializer(serializers.Serializer):
 
 class UpdatedUserAnimeSerializer(serializers.ModelSerializer):
     def validate(self, data):
-        anime = self.instance.anime if self.instance else None
+        instance = self.instance
+        anime = instance.anime if instance else None
+        status_value = data.get("status", instance.status if instance else None)
         progress = data.get("progress")
 
-        if anime and progress is not None and anime.episodes and progress > anime.episodes:
+        # Autofill episodes to x/x if marked as completed
+        if status_value == "completed" and anime and anime.episodes:
+            if progress is None or progress < anime.episodes:
+                data["progress"] = anime.episodes
+
+        # Checks progress bounds (episode count)
+        elif anime and progress is not None and anime.episodes and progress > anime.episodes:
             raise serializers.ValidationError(
                 {"progress": "Progress can't exceed total episode count."}
             )

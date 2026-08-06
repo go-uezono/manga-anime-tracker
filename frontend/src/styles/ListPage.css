@@ -1,0 +1,59 @@
+.list-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.list-page h1 {
+    margin-bottom: 1rem;
+}
+
+.error-text {
+    color: red;
+}
+
+.empty-message {
+    color: #666;
+}
+
+.anime-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.anime-table th,
+.anime-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.anime-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.anime-table img {
+    border-radius: 4px;
+    display: block;
+}
+
+.franchise-row {
+    background: #fafafa;
+    font-weight: 600;
+}
+
+.anime-table select {
+    padding: 0.25rem;
+}
+
+.anime-table input[type="number"] {
+    width: 4rem;
+    padding: 0.25rem;
+}
+
+.anime-table button {
+    cursor: pointer;
+    padding: 0.25rem 0.75rem;
+    margin-right: 0.25rem;
+}
