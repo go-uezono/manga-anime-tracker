@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { register } from "../api/auth";
-
+import "../styles/AuthPages.css";
 
 function RegisterPage() {
     const [username, setUsername] = useState("");
@@ -34,37 +34,39 @@ function RegisterPage() {
     };
 
     return (
-        <div>
-            <h1>Register</h1>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="username">Username</label>
-                    <input 
-                        id="username"
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                    />
-                </div>
-                <div>
-                    <label htmlFor="password">Password</label>
-                    <input 
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                {error && <p style={{ color: "red" }}>{error}</p>}
-                <button type="submit" disabled={loading}>
-                    {loading ? "Registering..." : "Register"}
-                </button>
-            </form>
-            <p>
-                Already have an account? <Link to="/login">Login</Link>
-            </p>
+        <div className="auth-page">
+            <div className="auth-card">
+                <h1>Create Account</h1>
+                <form onSubmit={handleSubmit}>
+                    <div className="auth-field">
+                        <label htmlFor="username">Username</label>
+                        <input 
+                            id="username"
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="auth-field">
+                        <label htmlFor="password">Password</label>
+                        <input 
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    {error && <p className="error-text">{error}</p>}
+                    <button type="submit" className="primary auth-submit" disabled={loading}>
+                        {loading ? "Registering..." : "Register"}
+                    </button>
+                </form>
+                <p className="auth-footer">
+                    Already have an account? <Link to="/login">Login</Link>
+                </p>
+            </div>
         </div>
     );
 }

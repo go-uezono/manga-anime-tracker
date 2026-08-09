@@ -44,6 +44,7 @@ class UserAnimeSerializer(serializers.ModelSerializer):
 class AddAnimeSerializer(serializers.Serializer):
     anilist_id = serializers.IntegerField()
     status = serializers.ChoiceField(choices=UserAnime.Status.choices)
+    progress = serializers.IntegerField(required=False, default=0, min_value=0)
 
 class UpdatedUserAnimeSerializer(serializers.ModelSerializer):
     def validate(self, data):

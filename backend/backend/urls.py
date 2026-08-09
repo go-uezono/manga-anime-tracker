@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from api.views import AddAnimeView, CreateUserView, ListUserAnimeView, SearchAnimeView, UserAnimeDetailView
+from api.views import AddAnimeView, CreateUserView, ListUserAnimeView, RecentAnimeView, SearchAnimeView, UserAnimeDetailView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/anime/add/", AddAnimeView.as_view(), name="add-anime"),
     path("api/anime/list/", ListUserAnimeView.as_view(), name="list-anime"),
     path("api/anime/<int:pk>/", UserAnimeDetailView.as_view(), name="anime-detail"),
+    path("api/anime/recent/", RecentAnimeView.as_view(), name="recent-anime"),
 ]

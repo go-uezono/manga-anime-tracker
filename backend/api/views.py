@@ -12,7 +12,7 @@ from .serializers import (
     UserAnimeSerializer,
     UserSerializer,
 )
-from .services import SEARCH_QUERY, fetch_from_anilist, get_or_create_anime, strip_name
+from .services import SEARCH_QUERY, RECENT_ANIME_QUERY, fetch_from_anilist, get_or_create_anime, strip_name
 
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -55,7 +55,16 @@ class AddAnimeView(APIView):
         
         validated = serializer.validated_data
         anime = get_or_create_anime(validated["anilist_id"])
-        progress = anime.episodes if validated["status"] == "completed" else 0
+
+        if validated["status"] == "completed":
+            progress = anime.episodes
+        else:
+            progress = validated.get("progress", 0)
+            if anime.episodes and progress > anime.episodes:
+                return Response(
+                    {"error": f"Progress can't exceed {anime.episodes} episodes."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         try:
             user_anime = UserAnime.objects.create(
@@ -111,4 +120,24 @@ class UserAnimeDetailView(generics.RetrieveUpdateDestroyAPIView):
         return UserAnime.objects.filter(
             user=self.request.user
         )
+
+# Fetches recent seasonal anime data
+class RecentAnimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        response = fetch_from_anilist(RECENT_ANIME_QUERY, {})
+        response.raise_for_status()
+        payload = response.json()
+
+        results = [
+            {
+                "anilist_id": item["id"],
+                "title": item["title"]["romaji"],
+                "image_url": item["coverImage"]["large"],
+                "episodes": item.get("episodes") or 0,
+            }
+            for item in payload["data"]["Page"]["media"]
+        ]
+        return Response(results)
         

@@ -29,6 +29,19 @@ query ($search: String) {
 }
 """
 
+RECENT_ANIME_QUERY = """
+query {
+    Page(perPage: 8) {
+        media(type: ANIME, sort: START_DATE_DESC, status: RELEASING, isAdult: false, countryOfOrigin: "JP") {
+            id
+            title { romaji }
+            coverImage { large }
+            episodes
+        }
+    }
+}
+"""
+
 def fetch_from_anilist(query, variables, retries=2, timeout=5):
     last_exception = None
 

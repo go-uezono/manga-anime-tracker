@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api/auth";
+import "../styles/AuthPages.css";
 
 function LoginPage() {
     const [username, setUsername] = useState("");
@@ -9,6 +10,7 @@ function LoginPage() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    // Method that handles login logic
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
@@ -18,7 +20,7 @@ function LoginPage() {
             await login(username, password);
             navigate("/");
         } catch (err) {
-            if (err.response?.status == 401) {
+            if (err.response?.status === 401) {
                 setError("Invalid username or password.");
             } else {
                 setError("Something went wrong, please try again.");
@@ -29,37 +31,39 @@ function LoginPage() {
     };
 
     return (
-        <div>
-            <h1>Login</h1>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="username">Username</label>
-                    <input 
-                        id="username"
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                    />
-                </div>
-                <div>
-                    <label htmlFor="password">Password</label>
-                    <input 
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                {error && <p style={{ color: "red" }}>{error}</p>}
-                <button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-            </form>
-            <p>
-                Don't have an account? <Link to="/register">Register</Link>
-            </p>
+        <div className="auth-page">
+            <div className="auth-card">
+                <h1>Welcome Back!</h1>
+                <form onSubmit={handleSubmit}>
+                    <div className="auth-field">
+                        <label htmlFor="username">Username</label>
+                        <input 
+                            id="username"
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="auth-field">
+                        <label htmlFor="password">Password</label>
+                        <input 
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    {error && <p className="error-text">{error}</p>}
+                    <button type="submit" className="primary auth-submit" disabled={loading}>
+                        {loading ? "Logging in..." : "Login"}
+                    </button>
+                </form>
+                <p className="auth-footer">
+                    Don't have an account? <Link to="/register">Register</Link>
+                </p>
+            </div>
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../api/auth";
+import "../styles/NavBar.css";
 
 function NavBar() {
     const navigate = useNavigate();
@@ -10,8 +11,8 @@ function NavBar() {
     };
 
     return (
-        <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-            <div style={{ display: "flex", gap: "1rem" }}>
+        <nav className="navbar">
+            <div className="navbar-links">
                 <Link to="/">My List</Link>
                 <Link to="/search">Search</Link>
             </div>

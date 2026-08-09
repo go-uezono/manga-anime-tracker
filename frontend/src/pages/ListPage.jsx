@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { listAnime, deleteAnime, updateAnime} from "../api/anime";
 import { ANIME_STATUS, STATUS_LABELS } from "../constants";
-import NavBar from "../components/NavBar";
 import "../styles/ListPage.css"
 
 function ListPage() {
@@ -71,7 +70,6 @@ function ListPage() {
 
     return (
         <div className="list-page">
-            <NavBar />
             <h1>My List</h1>
 
             {error && <p className="error-text">{error}</p>}
@@ -90,62 +88,98 @@ function ListPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {franchiseNames.map((franchiseName, franchiseIndex) => (
-                            <>
-                                <tr key={`${franchiseName}-header className="franchise-row"`}>
-                                    <td colSpan={6}>{franchiseIndex + 1}. {franchiseName}</td>
-                                </tr>
-                                {groupedAnime[franchiseName].map((entry) => (
-                                    <tr key={entry.id}>
-                                        <td></td>
-                                        <td>
-                                            <img src={entry.anime.image_url} alt={entry.anime.title} width="50"/>
-                                        </td>
-                                        <td>{entry.anime.title}</td>
-                                        <td>
-                                            {editingId === entry.id ? (
-                                                <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
-                                                    {Object.values(ANIME_STATUS).map((s) => (
-                                                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                STATUS_LABELS[entry.status]
-                                            )}
-                                        </td>
-                                        <td>
-                                            {editingId === entry.id ? (
-                                                <>
-                                                    <input 
-                                                        type="number"
-                                                        min="0"
-                                                        max={entry.anime.episodes || undefined}
-                                                        value={editProgress}
-                                                        onChange={(e) => setEditProgress(e.target.value)}
-                                                    />
-                                                    {" / "}{entry.anime.episodes || "?"}
-                                                </>
-                                            ) : (
-                                                `${entry.progress}/${entry.anime.episodes || "?"}`
-                                            )} 
-                                        </td>
-                                        <td>
-                                            {editingId === entry.id ? (
-                                                <>
-                                                    <button onClick={() => saveEdit(entry.id)}>Save</button>
-                                                    <button onClick={cancelEditing}>Cancel</button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button onClick={() => startEditing(entry)}>Edit</button>
-                                                    <button onClick={() => handleDelete(entry.id)}>Delete</button>
-                                                </>
-                                            )}
-                                        </td>
+                        {franchiseNames.map((franchiseName, franchiseIndex) => {
+                            const groupEntries = groupedAnime[franchiseName];
+                            const isFranchiseComplete = groupEntries.every (
+                                (e) => e.status === "completed"
+                            );
+
+                            return (
+                                <>
+                                    <tr 
+                                        key={`${franchiseName}-header`}
+                                        className={
+                                            isFranchiseComplete
+                                            ? "franchise-row franchise-complete"
+                                            : "franchise-row"
+                                        }
+                                    >                       
+                                        <td colSpan={6}>
+                                            {franchiseIndex + 1}. {franchiseName}
+                                        </td>            
                                     </tr>
-                                ))}
-                            </>
-                        ))}
+                                    {groupEntries.map((entry) => (
+                                        <tr
+                                            key={entry.id}
+                                            className={entry.status === "completed" ? "row-complete" : ""}
+                                        >
+                                            <td></td>
+                                            <td>
+                                                <img
+                                                    src={entry.anime.image_url}
+                                                    alt={entry.anime.title}
+                                                    width="50"
+                                                />
+                                            </td>
+                                            <td>{entry.anime.title}</td>
+                                            <td>
+                                                {editingId === entry.id ? (
+                                                    <select
+                                                        value={editStatus}
+                                                        onChange={(e) => setEditStatus(e.target.value)}
+                                                    >
+                                                        {Object.values(ANIME_STATUS).map((s) => (
+                                                            <option key={s} value={s}>
+                                                                {STATUS_LABELS[s]}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    STATUS_LABELS[entry.status]
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingId === entry.id ? (
+                                                    <>
+                                                        <input 
+                                                            type="number"
+                                                            min="0"
+                                                            max={entry.anime.episodes || undefined}
+                                                            value={editProgress}
+                                                            onChange={(e) => setEditProgress(e.target.value)}
+                                                        />
+                                                        {" / "}
+                                                        {entry.anime.episodes || "?"}
+                                                    </>
+                                                ) : (
+                                                    `${entry.progress}/${entry.anime.episodes || "?"}`
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingId === entry.id ? (
+                                                    <>
+                                                        <button 
+                                                            className="primary"
+                                                            onClick={() => saveEdit(entry.id)}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button onClick={cancelEditing}>Cancel</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => startEditing(entry)}>Edit</button>
+                                                        <button 
+                                                            className="danger" onClick={() => handleDelete(entry.id)}
+                                                        >Delete</button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </>
+                            );
+                        })}
                     </tbody>
                 </table>
             )}
