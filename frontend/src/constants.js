@@ -1,7 +1,7 @@
 export const ACCESS_TOKEN = "access";
 export const REFRESH_TOKEN = "refresh";
 
-export const API_BASE_URL = "http://localhost:8000/api";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 export const ANIME_STATUS = {
     PLANNED: "planned",
